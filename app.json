@@ -38,7 +38,9 @@
         "SYSTEM_ALERT_WINDOW",
         "WAKE_LOCK",
         "RECEIVE_BOOT_COMPLETED",
-        "SCHEDULE_EXACT_ALARM"
+        "SCHEDULE_EXACT_ALARM",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
       ]
     },
     "web": {
@@ -77,8 +79,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cfda193c-bbe5-4be9-a505-f495ea841f8d"
+        "projectId": "59ca212e-2253-4b69-9d60-40655d591c83"
       }
-    }
+    },
+    "owner": "webazi-agent-app"
   }
 }

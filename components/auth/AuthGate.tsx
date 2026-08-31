@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useSimStore } from '@/store/useSimStore';
 import { last9Digits, verifyNotificationNumber } from '@/services/numberVerification';
 import { registerAgentOnBackend, loginAgentOnBackend } from '@/services/agentBackend';
+import { refreshSimSlots, requestSmsPermissions } from '@/services/smsAutomation';
 
 /**
  * Best-effort sync with the central backend. Called after a
@@ -177,6 +179,8 @@ function SetupScreen() {
         secureTextEntry
       />
 
+      <InlineSimPicker colors={c} />
+
       {error && <Text style={{ color: c.error, fontSize: 13 }}>{error}</Text>}
 
       <Pressable
@@ -249,6 +253,8 @@ function LoginScreen() {
         secureTextEntry
       />
 
+      <InlineSimPicker colors={c} />
+
       {error && <Text style={{ color: c.error, fontSize: 13 }}>{error}</Text>}
 
       <Pressable
@@ -268,6 +274,88 @@ function LoginScreen() {
         </Text>
       )}
     </AuthScaffold>
+  );
+}
+
+/**
+ * The "Notification SIM" picker, made reachable from the login/setup
+ * screens themselves. This is the same tillSubscriptionId consumed by
+ * numberVerification.ts — without it being set here, pre-login, there
+ * was no way to reach it (the real picker in Settings only mounts
+ * after login, which requires this to already be set — a lockout).
+ */
+function InlineSimPicker({ colors }: { colors: (typeof Colors)['light'] }) {
+  const availableSims = useSimStore((s) => s.availableSims);
+  const tillSubscriptionId = useSimStore((s) => s.tillSubscriptionId);
+  const setTillSim = useSimStore((s) => s.setTillSim);
+  const [loading, setLoading] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setPermissionDenied(false);
+    const ok = await requestSmsPermissions();
+    if (!ok) {
+      setPermissionDenied(true);
+      setLoading(false);
+      return;
+    }
+    refreshSimSlots();
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (availableSims.length === 0) {
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Notification SIM</Text>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>
+        Pick which SIM slot this phone should use to verify your number and dial USSD.
+      </Text>
+
+      {permissionDenied && (
+        <Text style={{ color: colors.error, fontSize: 12 }}>
+          Phone permission denied — allow it to detect SIMs, then tap Refresh.
+        </Text>
+      )}
+
+      {availableSims.map((sim) => {
+        const selected = tillSubscriptionId === sim.subscriptionId;
+        return (
+          <Pressable
+            key={sim.subscriptionId}
+            onPress={() => setTillSim(sim.subscriptionId)}
+            style={[
+              styles.simRow,
+              {
+                borderColor: selected ? colors.tint : colors.border,
+                backgroundColor: selected ? colors.surfaceAlt : colors.background,
+              },
+            ]}>
+            <Text style={{ color: colors.text, fontWeight: selected ? '700' : '500' }}>
+              {sim.carrierName || sim.displayName || `SIM ${sim.slotIndex + 1}`}
+              {sim.number ? ` — ${sim.number}` : ''}
+            </Text>
+            {selected && <Text style={{ color: colors.tint, fontWeight: '700' }}>Selected</Text>}
+          </Pressable>
+        );
+      })}
+
+      {availableSims.length === 0 && !loading && (
+        <Text style={{ color: colors.muted, fontSize: 12 }}>No SIMs detected yet.</Text>
+      )}
+
+      <Pressable onPress={load} disabled={loading} style={{ alignSelf: 'flex-start' }}>
+        <Text style={{ color: colors.tint, fontWeight: '600', fontSize: 13 }}>
+          {loading ? 'Refreshing…' : 'Refresh SIM list'}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -332,4 +420,13 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, fontSize: 15 },
   primaryBtn: { borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   primaryBtnText: { fontWeight: '700', fontSize: 15 },
+  simRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
 });

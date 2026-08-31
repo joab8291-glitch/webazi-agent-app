@@ -1,0 +1,50 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Required to keep the scheduler loop alive while the app is backgrounded -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Required to show the persistent "watching for scheduled transactions"
+         notification on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Required to prompt the user to exempt the app from battery optimizations,
+         so scheduled transactions aren't throttled/killed by the OS -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Required for SchedulerBootReceiver to restart the scheduler service
+         after a device reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application>
+
+        <!-- Foreground service that keeps the JS scheduler's setInterval loop
+             alive in the background so a scheduled transaction isn't silently
+             frozen when Android kills the backgrounded process. -->
+        <service
+            android:name=".SchedulerForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"
+            android:label="Webazi Scheduler" />
+
+        <!-- Fired by the AlarmManager heartbeat scheduled in
+             SchedulerForegroundService; restarts the service if Android has
+             killed it since the last beat. -->
+        <receiver
+            android:name=".SchedulerHeartbeatReceiver"
+            android:exported="false" />
+
+        <!-- Restarts the scheduler service on every device boot. -->
+        <receiver
+            android:name=".SchedulerBootReceiver"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

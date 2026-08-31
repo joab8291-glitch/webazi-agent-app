@@ -13,7 +13,7 @@
       "bundleIdentifier": "com.webazi.ussdapp"
     },
     "android": {
-      "package": "com.webazi.ussdapp",
+      "package": "com.webazi.agentapp",
       "adaptiveIcon": {
         "backgroundColor": "#00A86B",
         "foregroundImage": "./assets/images/webazi_profile_photo.png",

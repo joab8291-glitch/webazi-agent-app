@@ -4,10 +4,3 @@
     "modules": ["expo.modules.schedulerservice.SchedulerServiceModule"]
   }
 }
-
-{
-  "platforms": ["android"],
-  "android": {
-    "modules": ["expo.modules.ussdexecutor.UssdExecutorModule"]
-  }
-}

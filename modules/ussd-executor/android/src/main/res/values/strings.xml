@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">Allows Webazi USSD App to read and interact with USSD dialogs for automated transactions.</string>
+</resources>

@@ -95,6 +95,38 @@ export async function verifyNotificationNumber(expectedNumber: string): Promise<
     return { matched: false, detectedNumber: null, raw: '', error: 'Phone call permission denied.' };
   }
 
+  // Without this, a not-yet-enabled (or since-revoked) accessibility
+  // service means no onAccessibilityEvent ever fires for the dialog
+  // that appears — the dial still goes out, the dialog still shows on
+  // screen, but onResult is never invoked, the OK button is never
+  // tapped, and this promise just hangs until ussdTimeoutMs, silently.
+  // floatCheck.ts already guards its balance-check dials the same way;
+  // this check was missing here.
+  if (!UssdExecutor.isAccessibilityEnabled()) {
+    return {
+      matched: false,
+      detectedNumber: null,
+      raw: '',
+      error: 'Accessibility service is not enabled — turn on "Webazi USSD Accessibility Service" in Settings → Accessibility, then try again.',
+    };
+  }
+
+  // Close any lingering USSD dialog left over from a previous session
+  // before dialing — mirrors the same safeguard floatCheck.ts uses.
+  // Without this, a dialog still settling/dismissing from an earlier
+  // attempt can be picked up by the accessibility service as this
+  // dial's "final" result, or can block the new one from being read
+  // at all. Requires a native rebuild — safe to call even if not yet
+  // present.
+  const appSettings = useAppSettingsStore.getState();
+  if (appSettings.autoCloseUssdDialogs && typeof UssdExecutor.closeLingeringUssdDialog === 'function') {
+    try {
+      UssdExecutor.closeLingeringUssdDialog();
+    } catch {
+      // Non-fatal — proceed with verification regardless.
+    }
+  }
+
   const log = useActivityStore.getState().addLog;
 
   const outcome = await new Promise<{ success: boolean; result: string }>((resolve) => {

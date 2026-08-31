@@ -1,0 +1,62 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Required to read/receive the Till SIM's incoming M-Pesa SMS -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
+    <!-- Required to send a guiding SMS to a customer (Engage on trigger text) -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <!-- Required to keep the SMS listener alive while the app is backgrounded -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Required to show the persistent "listener active" notification on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Required to prompt the user to exempt the app from battery optimizations,
+         so the background SMS listener isn't throttled/killed by the OS -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Required for BootReceiver to restart the SMS listener (and optionally
+         the app itself) after a device reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Required on Android 12+ for the exact "relaunch app 5s after boot"
+         alarm; BootReceiver falls back to an inexact delayed launch if this
+         isn't granted -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <application>
+
+        <!-- Foreground service that keeps startListening()'s BroadcastReceiver
+             alive in the background so a payment SMS isn't silently dropped
+             when Android kills the backgrounded process. -->
+        <service
+            android:name=".SmsForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"
+            android:label="Webazi SMS Listener" />
+
+        <!-- Fired by the AlarmManager heartbeat scheduled in SmsForegroundService;
+             restarts the service if Android has killed it since the last beat. -->
+        <receiver
+            android:name=".HeartbeatReceiver"
+            android:exported="false" />
+
+        <!-- Restarts the SMS listener service on every device boot, and
+             optionally relaunches the whole app 5s later (see BootPrefs /
+             SmsListenerModule.setBootRelaunchEnabled). -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

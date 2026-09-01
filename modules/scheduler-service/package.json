@@ -1,0 +1,12 @@
+{
+  "name": "scheduler-service",
+  "version": "1.0.0",
+  "description": "Local Expo module: scheduler-related native functionality.",
+  "main": "src/SchedulerServiceModule.ts",
+  "types": "src/SchedulerServiceModule.ts",
+  "license": "UNLICENSED",
+  "private": true,
+  "peerDependencies": {
+    "expo": "*"
+  }
+}

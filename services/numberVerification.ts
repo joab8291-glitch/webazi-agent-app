@@ -103,6 +103,10 @@ export async function verifyNotificationNumber(expectedNumber: string): Promise<
   // floatCheck.ts already guards its balance-check dials the same way;
   // this check was missing here.
   if (!UssdExecutor.isAccessibilityEnabled()) {
+    // Matches the same pattern used in smsAutomation.ts and index.tsx —
+    // jump straight to Android's Accessibility settings screen instead
+    // of just telling the agent to go find it themselves.
+    UssdExecutor.openAccessibilitySettings();
     return {
       matched: false,
       detectedNumber: null,

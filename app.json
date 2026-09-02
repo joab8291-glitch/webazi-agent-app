@@ -38,9 +38,7 @@
         "SYSTEM_ALERT_WINDOW",
         "WAKE_LOCK",
         "RECEIVE_BOOT_COMPLETED",
-        "SCHEDULE_EXACT_ALARM",
-        "android.permission.READ_CONTACTS",
-        "android.permission.WRITE_CONTACTS"
+        "SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {

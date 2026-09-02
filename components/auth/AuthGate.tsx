@@ -47,6 +47,19 @@ async function syncWithBackend(number: string, password: string, isFirstSetup: b
   if (isFirstSetup && !existingAgentId) {
     const loginResult = await loginAgentOnBackend(number, password);
     if (loginResult.ok) setAgentIdentity(loginResult.agentId, loginResult.agentKey);
+    return;
+  }
+
+  // The mirror case: a device that had isSetUp/local credentials from
+  // BEFORE this backend integration existed (or set up during early
+  // testing) goes straight to LoginScreen on every cold start, but the
+  // server has never seen this notificationNumber — login fails with
+  // "no account for this number" and, without this fallback, silently
+  // stays that way forever, since this whole function is fire-and-forget
+  // and there's no UI indicator either way. Register it now instead.
+  if (!isFirstSetup && !existingAgentId && result.reason === 'No account for this number') {
+    const registerResult = await registerAgentOnBackend(number, password);
+    if (registerResult.ok) setAgentIdentity(registerResult.agentId, registerResult.agentKey);
   }
 }
 

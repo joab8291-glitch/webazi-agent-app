@@ -1,0 +1,12 @@
+{
+  "name": "ussd-executor",
+  "version": "1.0.0",
+  "description": "Local Expo module: USSD dialing via ACTION_CALL plus an accessibility service that reads USSD response/menu dialogs and drives them automatically.",
+  "main": "src/UssdExecutorModule.ts",
+  "types": "src/UssdExecutorModule.ts",
+  "license": "UNLICENSED",
+  "private": true,
+  "peerDependencies": {
+    "expo": "*"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "sms-listener",
+  "version": "1.0.0",
+  "description": "Local Expo module: SMS listening native functionality.",
+  "main": "src/SmsListenerModule.ts",
+  "types": "src/SmsListenerModule.ts",
+  "license": "UNLICENSED",
+  "private": true,
+  "peerDependencies": {
+    "expo": "*"
+  }
+}
